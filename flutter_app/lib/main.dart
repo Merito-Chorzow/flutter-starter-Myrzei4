@@ -3,6 +3,7 @@ import 'home.dart';
 import 'add.dart';
 import 'detail.dart';
 import 'entry.dart';
+import 'theme.dart';
 
 void main() => runApp(const MyApp());
 
@@ -11,8 +12,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'GeoNotes',
-      theme: ThemeData(primarySwatch: Colors.blue),
+      title: 'Geo Journal',
+      theme: buildDarkTheme(),
+      themeMode: ThemeMode.dark,
       initialRoute: '/',
       routes: {
         '/': (_) => const HomePage(),

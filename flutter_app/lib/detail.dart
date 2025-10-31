@@ -12,10 +12,10 @@ class DetailPage extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(entry.description, style: const TextStyle(fontSize: 18)),
+          if (entry.description.isNotEmpty) Text(entry.description, style: const TextStyle(fontSize: 18)),
           const SizedBox(height: 16),
-          Text('Latitude: ${entry.latitude}'),
-          Text('Longitude: ${entry.longitude}'),
+          Text('Latitude: ${entry.latitude.toStringAsFixed(6)}'),
+          Text('Longitude: ${entry.longitude.toStringAsFixed(6)}'),
         ]),
       ),
     );

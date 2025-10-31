@@ -10,58 +10,72 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late Future<List<Entry>> _future;
+  List<Entry> _items = [];
 
   @override
   void initState() {
     super.initState();
     _future = fetchEntries();
+    _loadInitial();
+  }
+
+  Future<void> _loadInitial() async {
+    try {
+      final items = await fetchEntries();
+      if (!mounted) return;
+      setState(() => _items = items);
+    } catch (_) {}
   }
 
   Future<void> _refresh() async {
-
     final f = fetchEntries();
-    setState(() {
-      _future = f;
-    });
-
+    setState(() => _future = f);
     try {
-      await f;
-      
-    } catch (_) {
-      
-    }
+      final items = await f;
+      if (!mounted) return;
+      setState(() => _items = items);
+    } catch (_) {}
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tileHeight = isDark ? 88.0 : 64.0;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('GeoNotes')),
+      appBar: AppBar(
+        title: const Text('Geo Journal'),
+      ),
       body: FutureBuilder<List<Entry>>(
         future: _future,
         builder: (context, snap) {
-          if (snap.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snap.hasError) {
-            return Center(child: Text('Error: ${snap.error}'));
-          } else if (snap.data == null || snap.data!.isEmpty) {
+          if (snap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+          if (snap.hasError) return Center(child: Text('Error: ${snap.error}'));
+          final items = _items.isNotEmpty ? _items : (snap.data ?? []);
+          if (items.isEmpty) {
             return Center(
-              child: TextButton(
-                onPressed: _refresh,
-                child: const Text('No entries. Tap to refresh'),
-              ),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                const Text('No entries yet'),
+                const SizedBox(height: 8),
+                ElevatedButton(onPressed: _refresh, child: const Text('Refresh')),
+              ]),
             );
           }
-          final items = snap.data!;
           return RefreshIndicator(
             onRefresh: _refresh,
-            child: ListView.builder(
+            child: ListView.separated(
+              separatorBuilder: (_, __) => const Divider(height: 1),
               itemCount: items.length,
               itemBuilder: (c, i) {
                 final e = items[i];
-                return ListTile(
-                  title: Text(e.title),
-                  subtitle: Text('${e.latitude}, ${e.longitude}'),
-                  onTap: () => Navigator.pushNamed(context, '/detail', arguments: e),
+                return SizedBox(
+                  height: tileHeight,
+                  child: ListTile(
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: isDark ? 12 : 8),
+                    title: Text(e.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    subtitle: Text('${e.latitude.toStringAsFixed(5)}, ${e.longitude.toStringAsFixed(5)}'),
+                    onTap: () => Navigator.pushNamed(context, '/detail', arguments: e),
+                  ),
                 );
               },
             ),
@@ -70,10 +84,20 @@ class _HomePageState extends State<HomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          await Navigator.pushNamed(context, '/add');
-          _refresh();
+          final res = await Navigator.pushNamed(context, '/add');
+          if (res is Entry) {
+            setState(() => _items.insert(0, res));
+          } else if (res == true) {
+            await _refresh();
+          }
         },
         child: const Icon(Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 6,
+        child: SizedBox(height: 56),
       ),
     );
   }

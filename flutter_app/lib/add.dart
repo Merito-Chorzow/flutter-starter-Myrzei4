@@ -17,10 +17,9 @@ class _AddPageState extends State<AddPage> {
   bool _saving = false;
 
   Future<bool> _checkPermission() async {
-    final status = await Geolocator.checkPermission();
+    var status = await Geolocator.checkPermission();
     if (status == LocationPermission.denied) {
-      final r = await Geolocator.requestPermission();
-      return r == LocationPermission.always || r == LocationPermission.whileInUse;
+      status = await Geolocator.requestPermission();
     }
     return status == LocationPermission.always || status == LocationPermission.whileInUse;
   }
@@ -28,32 +27,39 @@ class _AddPageState extends State<AddPage> {
   Future<void> _getLocation() async {
     final ok = await _checkPermission();
     if (!ok) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Location permission required')));
       return;
     }
     try {
       final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      if (!mounted) return;
       setState(() {
         lat = pos.latitude;
         lon = pos.longitude;
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Location error: $e')));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to get location: $e')));
     }
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate() || lat == null || lon == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fill title and get coordinates')));
+    if (!_formKey.currentState!.validate()) return;
+    if (lat == null || lon == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please get coordinates first')));
       return;
     }
     setState(() => _saving = true);
     try {
-      final entry = Entry(title: _title.text, description: _desc.text, latitude: lat!, longitude: lon!);
-      await addEntry(entry);
-      if (mounted) Navigator.pop(context);
+      final entry = Entry(title: _title.text.trim(), description: _desc.text.trim(), latitude: lat!, longitude: lon!);
+      final saved = await addEntry(entry);
+      if (!mounted) return;
+      Navigator.pop(context, saved);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Save error: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save: $e')));
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -69,38 +75,40 @@ class _AddPageState extends State<AddPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add')),
+      appBar: AppBar(title: const Text('Add Note')),
       body: Padding(
         padding: const EdgeInsets.all(12),
-        child: Column(
-          children: [
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: _title,
-                    decoration: const InputDecoration(labelText: 'Title'),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter title' : null,
-                  ),
-                  TextFormField(controller: _desc, decoration: const InputDecoration(labelText: 'Description')),
-                ],
+        child: Column(children: [
+          Form(
+            key: _formKey,
+            child: Column(children: [
+              TextFormField(
+                controller: _title,
+                decoration: const InputDecoration(labelText: 'Title'),
+                validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter a title' : null,
               ),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton.icon(
-              onPressed: _getLocation,
-              icon: const Icon(Icons.my_location),
-              label: const Text('Get coordinates'),
-            ),
-            if (lat != null) Text('Coordinates: $lat, $lon'),
-            const Spacer(),
-            ElevatedButton(
+              TextFormField(controller: _desc, decoration: const InputDecoration(labelText: 'Description')),
+            ]),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton.icon(
+            onPressed: _getLocation,
+            icon: const Icon(Icons.my_location),
+            label: const Text('Get coordinates'),
+          ),
+          if (lat != null) Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text('Coordinates: ${lat!.toStringAsFixed(6)}, ${lon!.toStringAsFixed(6)}'),
+          ),
+          const Spacer(),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
               onPressed: _saving ? null : _save,
-              child: _saving ? const CircularProgressIndicator() : const Text('Save'),
+              child: _saving ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Save'),
             ),
-          ],
-        ),
+          ),
+        ]),
       ),
     );
   }
