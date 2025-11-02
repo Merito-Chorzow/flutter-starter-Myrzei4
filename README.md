@@ -20,11 +20,14 @@ Stwórz podstawową aplikację w **Flutter (Dart)** z **natywną funkcją** oraz
 ## Testowanie lokalne (w trakcie developmentu)
 - Uruchom na **emulatorze/urządzeniu**.
 - Pokaż: dodanie wpisu z **natywną funkcją** (GPS/zdjęcie), pojawienie się na liście/mapie.
+- <img width="907" height="939" alt="image" src="https://github.com/user-attachments/assets/4dea6182-679b-4b80-80ef-25c66161a330" />
+<img width="908" height="956" alt="image" src="https://github.com/user-attachments/assets/2ce8bf76-93ac-4a7f-bc58-a00ec62fb0e6" />
+<img width="918" height="970" alt="image" src="https://github.com/user-attachments/assets/ea911a00-ce80-4126-a4a0-a6e789a521cb" />
 - Pokaż komunikację z **API** (pobranie/zapis), zachowanie bez internetu/bez uprawnień.
-
+<img width="914" height="269" alt="image" src="https://github.com/user-attachments/assets/f1919067-895b-4aee-8d85-ec9a53cda902" />
 ## Definition of Done (DoD)
-- [ ] 3–4 widoki, kompletna nawigacja.
-- [ ] Co najmniej 1 **natywna funkcja**.
-- [ ] Co najmniej 1 operacja **API** (GET/POST).
-- [ ] Stany: ładowanie, błąd, pusty.
-- [ ] `README.md`, zrzuty ekranów, min. 3 commity.
+- [x] 3–4 widoki, kompletna nawigacja.
+- [x] Co najmniej 1 **natywna funkcja**.
+- [x] Co najmniej 1 operacja **API** (GET/POST).
+- [x] Stany: ładowanie, błąd, pusty.
+- [x] `README.md`, zrzuty ekranów, min. 3 commity.
